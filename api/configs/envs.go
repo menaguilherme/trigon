@@ -11,6 +11,7 @@ type Config struct {
 	Port string
 	Env  string
 	DB   DbConfig
+	Auth authConfig
 }
 
 type DbConfig struct {
@@ -18,6 +19,15 @@ type DbConfig struct {
 	MaxOpenConns int
 	MaxIdleConns int
 	MaxIdleTime  string
+}
+
+type authConfig struct {
+	Token tokenConfig
+}
+
+type tokenConfig struct {
+	Secret string
+	Iss    string
 }
 
 var Envs = initConfig()
@@ -33,6 +43,8 @@ func initConfig() Config {
 	Port := GetString("PORT", ":8080")
 	env := GetString("ENV", "development")
 
+	jwtSecret := GetString("JWT_SECRET", "secret")
+
 	return Config{
 		Port: Port,
 		Env:  env,
@@ -41,6 +53,12 @@ func initConfig() Config {
 			MaxOpenConns: maxOpenConns,
 			MaxIdleConns: maxIdleConns,
 			MaxIdleTime:  maxIdleTime,
+		},
+		Auth: authConfig{
+			Token: tokenConfig{
+				Secret: jwtSecret,
+				Iss:    "trigon",
+			},
 		},
 	}
 

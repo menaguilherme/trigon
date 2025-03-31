@@ -12,8 +12,18 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/menaguilherme/trigon/internal/cms"
+	"github.com/menaguilherme/trigon/configs"
+	"github.com/menaguilherme/trigon/internal/auth"
+	"github.com/menaguilherme/trigon/internal/store"
+	"go.uber.org/zap"
 )
+
+type application struct {
+	config        configs.Config
+	logger        *zap.SugaredLogger
+	store         store.Storage
+	authenticator auth.Authenticator
+}
 
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
@@ -25,13 +35,12 @@ func (app *application) mount() http.Handler {
 
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	cmsHandler := &cms.Handler{
-		Logger:  app.logger,
-		Configs: app.config,
-		Store:   app.store,
-	}
-
-	cms.RegisterRoutes(r, cmsHandler)
+	r.Route("/v1", func(r chi.Router) {
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/register", app.RegisterUserHandler)
+			r.Post("/login", app.LoginHandler)
+		})
+	})
 
 	return r
 

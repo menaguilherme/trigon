@@ -1,0 +1,31 @@
+CREATE EXTENSION IF NOT EXISTS citext;
+
+CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY NOT NULL,
+  first_name VARCHAR(80) NOT NULL,
+  last_name VARCHAR(80) NOT NULL,
+  username CITEXT NOT NULL UNIQUE,
+  email CITEXT NOT NULL UNIQUE,
+  password TEXT NOT NULL,
+  profile_url TEXT,
+  refresh_token_version INTEGER NOT NULL DEFAULT 1,
+  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+  is_blocked BOOLEAN NOT NULL DEFAULT FALSE,
+
+  deleted_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TRIGGER set_timestamp
+BEFORE UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();

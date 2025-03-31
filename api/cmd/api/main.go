@@ -2,16 +2,11 @@ package main
 
 import (
 	"github.com/menaguilherme/trigon/configs"
-	"github.com/menaguilherme/trigon/internal/core/db"
-	"github.com/menaguilherme/trigon/internal/core/store"
+	"github.com/menaguilherme/trigon/internal/auth"
+	"github.com/menaguilherme/trigon/internal/db"
+	"github.com/menaguilherme/trigon/internal/store"
 	"go.uber.org/zap"
 )
-
-type application struct {
-	config configs.Config
-	logger *zap.SugaredLogger
-	store  store.Storage
-}
 
 func main() {
 	logger := zap.Must(zap.NewProduction()).Sugar()
@@ -30,12 +25,20 @@ func main() {
 	defer db.Close()
 	logger.Info("database connection pool established")
 
+	// Authenticator
+	jwtAuthenticator := auth.NewJWTAuthenticator(
+		configs.Envs.Auth.Token.Secret,
+		configs.Envs.Auth.Token.Iss,
+		configs.Envs.Auth.Token.Iss,
+	)
+
 	store := store.NewStorage(db)
 
 	app := &application{
-		config: configs.Envs,
-		logger: logger,
-		store:  store,
+		config:        configs.Envs,
+		logger:        logger,
+		store:         store,
+		authenticator: jwtAuthenticator,
 	}
 
 	mux := app.mount()

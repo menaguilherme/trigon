@@ -18,13 +18,18 @@ var (
 
 type Storage struct {
 	Users interface {
-		Create(context.Context) error
+		Create(context.Context, *User) error
+		GetByEmail(ctx context.Context, email string) (*User, error)
+	}
+	RefreshTokens interface {
+		Create(context.Context, *RefreshToken) error
 	}
 }
 
 func NewStorage(db *sql.DB) Storage {
 	return Storage{
-		Users: &UserStore{db},
+		Users:         &UserStore{db},
+		RefreshTokens: &RefreshTokenStore{db},
 	}
 }
 
