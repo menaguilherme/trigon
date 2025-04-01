@@ -59,3 +59,57 @@ func (s *RefreshTokenStore) Create(ctx context.Context, refresh_token *RefreshTo
 	return nil
 
 }
+
+func (s *RefreshTokenStore) GetByToken(ctx context.Context, refresh_token string) (*RefreshToken, error) {
+	query := `
+		SELECT id, user_id, token, version, expires_at, created_at, updated_at, revoked_at
+		FROM refresh_tokens
+		WHERE token = $1
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	refreshToken := &RefreshToken{}
+	err := s.db.QueryRowContext(
+		ctx,
+		query,
+		refresh_token,
+	).Scan(
+		&refreshToken.ID,
+		&refreshToken.UserID,
+		&refreshToken.Token,
+		&refreshToken.Version,
+		&refreshToken.ExpiresAt,
+		&refreshToken.CreatedAt,
+		&refreshToken.UpdatedAt,
+		&refreshToken.RevokedAt,
+	)
+	if err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			return nil, ErrNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return refreshToken, nil
+}
+
+func (s *RefreshTokenStore) RevokeTokenByID(ctx context.Context, id string) error {
+	query := `
+		UPDATE refresh_tokens SET revoked_at = $1 WHERE id = $2
+	`
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	_, err := s.db.ExecContext(
+		ctx,
+		query,
+		time.Now(),
+		id,
+	)
+
+	return err
+}

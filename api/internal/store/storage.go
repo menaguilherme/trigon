@@ -20,9 +20,12 @@ type Storage struct {
 	Users interface {
 		Create(context.Context, *User) error
 		GetByEmail(ctx context.Context, email string) (*User, error)
+		GetByID(context.Context, string) (*User, error)
 	}
 	RefreshTokens interface {
 		Create(context.Context, *RefreshToken) error
+		GetByToken(context.Context, string) (*RefreshToken, error)
+		RevokeTokenByID(context.Context, string) error
 	}
 }
 

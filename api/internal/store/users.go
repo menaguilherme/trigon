@@ -145,3 +145,45 @@ func (s *UserStore) GetByEmail(ctx context.Context, email string) (*User, error)
 
 	return user, nil
 }
+
+func (s *UserStore) GetByID(ctx context.Context, id string) (*User, error) {
+	query := `
+		SELECT id, first_name, last_name, username, email, password, profile_url, refresh_token_version, is_deleted, is_blocked, deleted_at, created_at, updated_at
+		FROM users
+		WHERE id = $1 AND is_blocked = false
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	user := &User{}
+	err := s.db.QueryRowContext(
+		ctx,
+		query,
+		id,
+	).Scan(
+		&user.ID,
+		&user.FirstName,
+		&user.LastName,
+		&user.Username,
+		&user.Email,
+		&user.Password.hash,
+		&user.ProfileURL,
+		&user.RefreshTokenVersion,
+		&user.IsDeleted,
+		&user.IsBlocked,
+		&user.DeletedAt,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			return nil, ErrNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return user, nil
+}
