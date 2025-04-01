@@ -272,3 +272,29 @@ func (app *application) RefreshTokenHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 }
+
+func (app *application) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	var payload RefreshTokenPayload
+	if err := readJSON(w, r, &payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	if err := Validate.Struct(payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	ctx := r.Context()
+
+	err := app.store.RefreshTokens.RevokeTokenByID(ctx, payload.RefreshToken)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	if err := app.jsonMessageResponse(w, http.StatusOK, "Successfully logged out"); err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+}
