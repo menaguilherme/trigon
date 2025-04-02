@@ -21,6 +21,7 @@ type Storage struct {
 		Create(context.Context, *User) error
 		GetByEmail(ctx context.Context, email string) (*User, error)
 		GetByID(context.Context, string) (*User, error)
+		IncreaseTokenVersion(context.Context, *User) error
 	}
 	RefreshTokens interface {
 		Create(context.Context, *RefreshToken) error

@@ -13,7 +13,7 @@ type JWTAuthenticator struct {
 }
 
 func NewJWTAuthenticator(secret, aud, iss string) *JWTAuthenticator {
-	return &JWTAuthenticator{secret, iss, aud}
+	return &JWTAuthenticator{secret, aud, iss}
 }
 
 func (a *JWTAuthenticator) GenerateToken(claims jwt.Claims) (string, error) {
@@ -37,7 +37,7 @@ func (a *JWTAuthenticator) ValidateToken(token string) (*jwt.Token, error) {
 	},
 		jwt.WithExpirationRequired(),
 		jwt.WithAudience(a.aud),
-		jwt.WithIssuer(a.aud),
+		jwt.WithIssuer(a.iss),
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),
 	)
 }

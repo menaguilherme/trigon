@@ -28,6 +28,7 @@ type authConfig struct {
 type tokenConfig struct {
 	Secret string
 	Iss    string
+	Aud    string
 }
 
 var Envs = initConfig()
@@ -57,7 +58,8 @@ func initConfig() Config {
 		Auth: authConfig{
 			Token: tokenConfig{
 				Secret: jwtSecret,
-				Iss:    "trigon",
+				Iss:    "trigon-api",
+				Aud:    "trigon",
 			},
 		},
 	}

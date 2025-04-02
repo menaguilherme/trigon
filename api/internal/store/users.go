@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -186,4 +187,36 @@ func (s *UserStore) GetByID(ctx context.Context, id string) (*User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *UserStore) IncreaseTokenVersion(ctx context.Context, user *User) error {
+	fmt.Println(user)
+	query := `
+		UPDATE users 
+		SET refresh_token_version = refresh_token_version + 1
+		WHERE id = $1
+		RETURNING refresh_token_version
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	err := s.db.QueryRowContext(
+		ctx,
+		query,
+		user.ID,
+	).Scan(
+		&user.RefreshTokenVersion,
+	)
+
+	if err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			return ErrNotFound
+		default:
+			return err
+		}
+	}
+
+	return nil
 }

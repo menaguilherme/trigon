@@ -124,6 +124,9 @@ func (app *application) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		"exp": expiresAt.Unix(),
 		"iat": time.Now().Unix(),
 		"nbf": time.Now().Unix(),
+		"iss": app.config.Auth.Token.Iss,
+		"aud": app.config.Auth.Token.Aud,
+		"rtv": user.RefreshTokenVersion,
 	}
 
 	accessToken, err := app.authenticator.GenerateToken(claims)
@@ -229,6 +232,9 @@ func (app *application) RefreshTokenHandler(w http.ResponseWriter, r *http.Reque
 		"exp": expiresAt.Unix(),
 		"iat": time.Now().Unix(),
 		"nbf": time.Now().Unix(),
+		"iss": app.config.Auth.Token.Iss,
+		"aud": app.config.Auth.Token.Aud,
+		"rtv": user.RefreshTokenVersion,
 	}
 
 	accessToken, err := app.authenticator.GenerateToken(claims)
@@ -294,6 +300,30 @@ func (app *application) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := app.jsonMessageResponse(w, http.StatusOK, "Successfully logged out"); err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+}
+
+func (app *application) LogoutAllHandler(w http.ResponseWriter, r *http.Request) {
+	userFromRequest := getUserFromContext(r)
+	tokenVersion := getRefreshTokenVersionFromContext(r)
+
+	user, err := app.store.Users.GetByID(r.Context(), userFromRequest.ID)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	if tokenVersion == user.RefreshTokenVersion {
+		err = app.store.Users.IncreaseTokenVersion(r.Context(), user)
+		if err != nil {
+			app.internalServerError(w, r, err)
+			return
+		}
+	}
+
+	if err := app.jsonMessageResponse(w, http.StatusOK, "Successfully logged out from all devices"); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}

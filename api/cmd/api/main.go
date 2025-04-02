@@ -25,10 +25,9 @@ func main() {
 	defer db.Close()
 	logger.Info("database connection pool established")
 
-	// Authenticator
 	jwtAuthenticator := auth.NewJWTAuthenticator(
 		configs.Envs.Auth.Token.Secret,
-		configs.Envs.Auth.Token.Iss,
+		configs.Envs.Auth.Token.Aud,
 		configs.Envs.Auth.Token.Iss,
 	)
 

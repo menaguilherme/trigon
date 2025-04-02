@@ -40,7 +40,12 @@ func (app *application) mount() http.Handler {
 			r.Post("/register", app.RegisterUserHandler)
 			r.Post("/login", app.LoginHandler)
 			r.Post("/refresh", app.RefreshTokenHandler)
-			r.Post("/logout", app.LogoutHandler)
+
+			r.Group(func(r chi.Router) {
+				r.Use(app.AuthTokenMiddleware)
+				r.Post("/logout", app.LogoutHandler)
+				r.Post("/logout-all", app.LogoutAllHandler)
+			})
 		})
 	})
 
